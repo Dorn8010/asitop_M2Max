@@ -128,6 +128,19 @@ def get_gpu_cores():
 
 
 def get_soc_info():
+    """Returns a dict of SOC info"""
+    soc_info_dict = {}
+
+    # Get CPU info from sysctl
+    cpu_info_dict = get_cpu_info()
+
+    # Get SOC name
+    soc_name = cpu_info_dict.get("machdep.cpu.brand_string")
+    if soc_name is None:
+        # Fallback for Linux systems or when the key is not available
+        soc_name = cpu_info_dict.get("model name", "Unknown")
+
+    soc_info_dict["name"] = soc_name
     cpu_info_dict = get_cpu_info()
     core_counts_dict = get_core_counts()
     try:
