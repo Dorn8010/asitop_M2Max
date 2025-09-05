@@ -160,42 +160,58 @@ def get_soc_info():
         "p_core_count": p_core_count,
         "gpu_core_count": get_gpu_cores()
     }
-    # TDP (power)
-    if soc_info["name"] == "Apple M1 Max":
-        soc_info["cpu_max_power"] = 30
-        soc_info["gpu_max_power"] = 60
-    elif soc_info["name"] == "Apple M1 Pro":
-        soc_info["cpu_max_power"] = 30
-        soc_info["gpu_max_power"] = 30
-    elif soc_info["name"] == "Apple M1":
-        soc_info["cpu_max_power"] = 20
-        soc_info["gpu_max_power"] = 20
-    elif soc_info["name"] == "Apple M1 Ultra":
-        soc_info["cpu_max_power"] = 60
-        soc_info["gpu_max_power"] = 120
-    elif soc_info["name"] == "Apple M2":
-        soc_info["cpu_max_power"] = 25
-        soc_info["gpu_max_power"] = 15
-    else:
-        soc_info["cpu_max_power"] = 20
-        soc_info["gpu_max_power"] = 20
-    # bandwidth
-    if soc_info["name"] == "Apple M1 Max":
-        soc_info["cpu_max_bw"] = 250
-        soc_info["gpu_max_bw"] = 400
-    elif soc_info["name"] == "Apple M1 Pro":
-        soc_info["cpu_max_bw"] = 200
-        soc_info["gpu_max_bw"] = 200
-    elif soc_info["name"] == "Apple M1":
-        soc_info["cpu_max_bw"] = 70
-        soc_info["gpu_max_bw"] = 70
-    elif soc_info["name"] == "Apple M1 Ultra":
-        soc_info["cpu_max_bw"] = 500
-        soc_info["gpu_max_bw"] = 800
-    elif soc_info["name"] == "Apple M2":
-        soc_info["cpu_max_bw"] = 100
-        soc_info["gpu_max_bw"] = 100
-    else:
-        soc_info["cpu_max_bw"] = 70
-        soc_info["gpu_max_bw"] = 70
-    return soc_info
+# A lookup table for TDP and bandwidth based on SOC name
+SOC_SPECS = {
+    # M1 Series
+    "Apple M1": {"cpu_max_power": 20, "gpu_max_power": 20, "cpu_max_bw": 70, "gpu_max_bw": 70},
+    "Apple M1 Pro": {"cpu_max_power": 30, "gpu_max_power": 30, "cpu_max_bw": 200, "gpu_max_bw": 200},
+    "Apple M1 Max": {"cpu_max_power": 30, "gpu_max_power": 60, "cpu_max_bw": 250, "gpu_max_bw": 400},
+    "Apple M1 Ultra": {"cpu_max_power": 60, "gpu_max_power": 120, "cpu_max_bw": 500, "gpu_max_bw": 800},
+    
+    # M2 Series
+    "Apple M2": {"cpu_max_power": 25, "gpu_max_power": 15, "cpu_max_bw": 100, "gpu_max_bw": 100},
+    "Apple M2 Pro": {"cpu_max_power": 30, "gpu_max_power": 30, "cpu_max_bw": 200, "gpu_max_bw": 200},
+    "Apple M2 Max": {"cpu_max_power": 30, "gpu_max_power": 60, "cpu_max_bw": 250, "gpu_max_bw": 400},
+    "Apple M2 Ultra": {"cpu_max_power": 60, "gpu_max_power": 120, "cpu_max_bw": 400, "gpu_max_bw": 800},
+    
+    # M3 Series
+    "Apple M3": {"cpu_max_power": 25, "gpu_max_power": 15, "cpu_max_bw": 100, "gpu_max_bw": 100},
+    "Apple M3 Pro": {"cpu_max_power": 30, "gpu_max_power": 30, "cpu_max_bw": 150, "gpu_max_bw": 150},
+    "Apple M3 Max": {"cpu_max_power": 30, "gpu_max_power": 60, "cpu_max_bw": 300, "gpu_max_bw": 400},
+    
+    # M4 Series
+    "Apple M4": {"cpu_max_power": 25, "gpu_max_power": 15, "cpu_max_bw": 120, "gpu_max_bw": 120},
+    "Apple M4 Pro": {"cpu_max_power": 30, "gpu_max_power": 30, "cpu_max_bw": 273, "gpu_max_bw": 273},
+    "Apple M4 Max": {"cpu_max_power": 30, "gpu_max_power": 60, "cpu_max_bw": 410, "gpu_max_bw": 546}
+}
+
+# The initial `soc_info` dictionary
+soc_info = {
+    "name": cpu_info_dict["machdep.cpu.brand_string"],
+    "core_count": int(cpu_info_dict["machdep.cpu.core_count"]),
+    "cpu_max_power": None,
+    "gpu_max_power": None,
+    "cpu_max_bw": None,
+    "gpu_max_bw": None,
+    "e_core_count": e_core_count,
+    "p_core_count": p_core_count,
+    "gpu_core_count": get_gpu_cores()
+}
+# A simple way to get max values for the M4 Max based on its core count
+if "M4 Max" in soc_info["name"]:
+    if soc_info["core_count"] == 14:
+        soc_info["cpu_max_bw"] = 410
+        soc_info["gpu_max_bw"] = 410
+    elif soc_info["core_count"] == 16:
+        soc_info["cpu_max_bw"] = 546
+        soc_info["gpu_max_bw"] = 546
+    
+    # Update other values for M4 Max
+    soc_info["cpu_max_power"] = 30
+    soc_info["gpu_max_power"] = 60
+
+# For all other models, use the lookup table
+else:
+    soc_info.update(SOC_SPECS.get(soc_info["name"], {"cpu_max_power": 20, "gpu_max_power": 20, "cpu_max_bw": 70, "gpu_max_bw": 70}))
+
+return soc_info
